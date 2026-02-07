@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="description" content="Private personal finance tracker - all data stays on your device">
+
+```
+<title>Finance Tracker</title>
+
+<!-- PWA Icons -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%234A90E2' rx='40'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='80' fill='white'>💰</text></svg>">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💰</text></svg>">
+<link rel="manifest" href="manifest.json">
+
+<!-- Styles -->
+<link rel="stylesheet" href="styles.css">
+
+<!-- Chart.js from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+```
+
+</head>
+<body>
+    <!-- App Container -->
+    <div id="app" class="app-container">
+
+```
+    <!-- Header -->
+    <header class="app-header glass">
+        <h1>💰 Finance Tracker</h1>
+        <button class="settings-btn" id="settingsBtn" aria-label="Settings">⚙️</button>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="tab-nav glass">
+        <button class="tab-btn active" data-tab="dashboard">
+            <span class="tab-icon">📊</span>
+            <span class="tab-label">Dashboard</span>
+        </button>
+        <button class="tab-btn" data-tab="transactions">
+            <span class="tab-icon">💳</span>
+            <span class="tab-label">Transactions</span>
+        </button>
+        <button class="tab-btn" data-tab="charts">
+            <span class="tab-icon">📈</span>
+            <span class="tab-label">Insights</span>
+        </button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        
+        <!-- Dashboard Tab -->
+        <section id="dashboard" class="tab-content active">
+            
+            <!-- Balance Card -->
+            <div class="card glass balance-card">
+                <div class="card-header">
+                    <h2>Current Balance</h2>
+                </div>
+                <div class="balance-amount" id="currentBalance">$0.00</div>
+                <div class="balance-trend" id="balanceTrend"></div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="stats-grid">
+                <div class="stat-card glass income-card">
+                    <div class="stat-icon">💵</div>
+                    <div class="stat-label">This Month Income</div>
+                    <div class="stat-value" id="monthIncome">$0.00</div>
+                </div>
+                <div class="stat-card glass expense-card">
+                    <div class="stat-icon">💸</div>
+                    <div class="stat-label">This Month Expenses</div>
+                    <div class="stat-value" id="monthExpenses">$0.00</div>
+                </div>
+                <div class="stat-card glass savings-card">
+                    <div class="stat-icon">🏦</div>
+                    <div class="stat-label">Total Savings</div>
+                    <div class="stat-value" id="totalSavings">$0.00</div>
+                </div>
+                <div class="stat-card glass bills-card">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-label">Monthly Bills</div>
+                    <div class="stat-value" id="monthlyBills">$0.00</div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="card glass recent-transactions">
+                <div class="card-header">
+                    <h3>Recent Activity</h3>
+                </div>
+                <div id="recentTransactionsList" class="transactions-list"></div>
+            </div>
+
+            <!-- Quick Add Button -->
+            <button class="fab" id="quickAddBtn" aria-label="Add Transaction">+</button>
+        </section>
+
+        <!-- Transactions Tab -->
+        <section id="transactions" class="tab-content">
+            
+            <!-- Add Transaction Form -->
+            <div class="card glass add-transaction-card">
+                <div class="card-header">
+                    <h3>Add Transaction</h3>
+                </div>
+                <form id="transactionForm" class="transaction-form">
+                    <div class="form-group">
+                        <label for="transactionType">Type</label>
+                        <select id="transactionType" required>
+                            <option value="income">💵 Income</option>
+                            <option value="expense">💸 Expense</option>
+                            <option value="bill">📋 Bill</option>
+                            <option value="subscription">🔄 Subscription</option>
+                            <option value="savings">🏦 Savings</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="transactionAmount">Amount</label>
+                        <input type="number" id="transactionAmount" step="0.01" min="0" placeholder="0.00" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="transactionDescription">Description</label>
+                        <input type="text" id="transactionDescription" placeholder="e.g., Salary, Rent, Netflix" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="transactionDate">Date</label>
+                        <input type="date" id="transactionDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="transactionNotes">Notes (Optional)</label>
+                        <textarea id="transactionNotes" rows="2" placeholder="Additional details..."></textarea>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="transactionRecurring">
+                            <span class="checkbox-custom"></span>
+                            <span>Repeat monthly</span>
+                        </label>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" id="submitTransactionBtn">Add Transaction</button>
+                        <button type="button" class="btn btn-secondary" id="cancelEditBtn" style="display: none;">Cancel</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- All Transactions List -->
+            <div class="card glass transactions-history">
+                <div class="card-header">
+                    <h3>All Transactions</h3>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="income">Income</button>
+                        <button class="filter-btn" data-filter="expense">Expense</button>
+                    </div>
+                </div>
+                <div id="allTransactionsList" class="transactions-list"></div>
+            </div>
+        </section>
+
+        <!-- Charts Tab -->
+        <section id="charts" class="tab-content">
+            
+            <!-- Monthly Overview Chart -->
+            <div class="card glass chart-card">
+                <div class="card-header">
+                    <h3>Monthly Overview</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Category Breakdown Chart -->
+            <div class="card glass chart-card">
+                <div class="card-header">
+                    <h3>Spending by Category</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recurring Transactions -->
+            <div class="card glass recurring-card">
+                <div class="card-header">
+                    <h3>Recurring Transactions</h3>
+                </div>
+                <div id="recurringList" class="recurring-list"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="modal-close" id="closeSettingsBtn">×</button>
+            </div>
+            <div class="modal-body">
+                
+                <div class="settings-section">
+                    <h3>Data Management</h3>
+                    <button class="btn btn-primary btn-block" id="exportDataBtn">📥 Export Data</button>
+                    <button class="btn btn-secondary btn-block" id="importDataBtn">📤 Import Data</button>
+                    <input type="file" id="importFileInput" accept=".json" style="display: none;">
+                </div>
+
+                <div class="settings-section">
+                    <h3>Danger Zone</h3>
+                    <button class="btn btn-danger btn-block" id="resetDataBtn">🗑️ Reset All Data</button>
+                    <p class="settings-note">This will permanently delete all your transactions and data.</p>
+                </div>
+
+                <div class="settings-section">
+                    <h3>About</h3>
+                    <p class="settings-note">
+                        <strong>Finance Tracker v1.0</strong><br>
+                        All data is stored locally on your device.<br>
+                        No data is sent to any server.<br>
+                        Remember to export backups regularly.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Install Prompt Banner -->
+    <div id="installBanner" class="install-banner glass" style="display: none;">
+        <div class="install-content">
+            <span class="install-icon">📱</span>
+            <div class="install-text">
+                <strong>Install App</strong>
+                <p>Add to home screen for quick access</p>
+            </div>
+        </div>
+        <button class="install-btn" id="installBtn">Install</button>
+        <button class="install-close" id="closeInstallBtn">×</button>
+    </div>
+
+</div>
+
+<!-- Scripts -->
+<script src="app.js"></script>
+```
+
+</body>
+</html>
