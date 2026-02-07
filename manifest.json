@@ -1,67 +1,20 @@
 {
-“name”: “Finance Tracker”,
-“short_name”: “Finance”,
-“description”: “Private personal finance tracker - all data stays on your device”,
-“start_url”: “./”,
-“display”: “standalone”,
-“background_color”: “#1a1a2e”,
-“theme_color”: “#1a1a2e”,
-“orientation”: “portrait-primary”,
-“scope”: “./”,
-“icons”: [
-{
-“src”: “data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%234A90E2' rx='48'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='100' fill='white'>💰</text></svg>”,
-“sizes”: “192x192”,
-“type”: “image/svg+xml”,
-“purpose”: “any”
-},
-{
-“src”: “data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%234A90E2' rx='128'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='280' fill='white'>💰</text></svg>”,
-“sizes”: “512x512”,
-“type”: “image/svg+xml”,
-“purpose”: “any”
-},
-{
-“src”: “data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%234A90E2' rx='48'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='100' fill='white'>💰</text></svg>”,
-“sizes”: “192x192”,
-“type”: “image/svg+xml”,
-“purpose”: “maskable”
-}
-],
-“categories”: [“finance”, “productivity”, “utilities”],
-“prefer_related_applications”: false,
-“screenshots”: [
-{
-“src”: “data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 844'><rect width='390' height='844' fill='%23f5f7fa'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='48' fill='%234A90E2'>Finance Tracker</text></svg>”,
-“sizes”: “390x844”,
-“type”: “image/svg+xml”,
-“form_factor”: “narrow”
-}
-],
-“shortcuts”: [
-{
-“name”: “Add Transaction”,
-“short_name”: “Add”,
-“description”: “Quickly add a new transaction”,
-“url”: “./?action=add”,
-“icons”: [
-{
-“src”: “data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><text y='0.9em' font-size='80'>💳</text></svg>”,
-“sizes”: “96x96”
-}
-]
-},
-{
-“name”: “View Dashboard”,
-“short_name”: “Dashboard”,
-“description”: “View your financial overview”,
-“url”: “./?tab=dashboard”,
-“icons”: [
-{
-“src”: “data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><text y='0.9em' font-size='80'>📊</text></svg>”,
-“sizes”: “96x96”
-}
-]
-}
-]
+  "name": "Liquid Finance",
+  "short_name": "Finance",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f0f4f8",
+  "theme_color": "#f0f4f8",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/icon/192/192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://picsum.photos/seed/icon/512/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }

@@ -1,264 +1,1104 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#1a1a2e">
-    <meta name="description" content="Private personal finance tracker - all data stays on your device">
+    <meta name="theme-color" content="#f0f4f8">
+    <title>Liquid Finance</title>
+    
+    <!-- PWA Manifest Placeholder (You will create this file separately) -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://picsum.photos/seed/icon/192/192">
 
-```
-<title>Finance Tracker</title>
+    <!-- Chart.js for clean, lightweight charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- PWA Icons -->
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%234A90E2' rx='40'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='80' fill='white'>💰</text></svg>">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💰</text></svg>">
-<link rel="manifest" href="manifest.json">
+    <style>
+        :root {
+            --bg-color: #f0f4f8;
+            --text-color: #1e293b;
+            --text-secondary: #64748b;
+            --card-bg: rgba(255, 255, 255, 0.65);
+            --card-border: rgba(255, 255, 255, 0.8);
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+            --blur-amount: 20px;
+            --safe-area-bottom: env(safe-area-inset-bottom);
+            --safe-area-top: env(safe-area-inset-top);
+        }
 
-<!-- Styles -->
-<link rel="stylesheet" href="styles.css">
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #0f172a;
+                --text-color: #f1f5f9;
+                --text-secondary: #94a3b8;
+                --card-bg: rgba(30, 41, 59, 0.7);
+                --card-border: rgba(255, 255, 255, 0.1);
+                --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            }
+        }
 
-<!-- Chart.js from CDN -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-```
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
 
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            /* Abstract Gradient Background for Liquid Effect */
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            background-attachment: fixed;
+            background-size: cover;
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden; /* App-like feel */
+        }
+
+        /* Layout */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            background: rgba(255,255,255,0.02); /* Subtle overlay */
+        }
+
+        /* Header */
+        header {
+            padding: calc(20px + var(--safe-area-top)) 20px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.5px;
+            color: #fff; /* Always white on dark gradient header */
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .header-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s;
+        }
+        
+        .header-btn:active { transform: scale(0.9); }
+
+        /* Main Content Area */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: calc(100px + var(--safe-area-bottom)); /* Space for nav */
+            scroll-behavior: smooth;
+        }
+
+        /* Glass Cards */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(var(--blur-amount));
+            -webkit-backdrop-filter: blur(var(--blur-amount));
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--glass-shadow);
+            transition: transform 0.2s ease;
+        }
+
+        /* Balance Section */
+        .balance-card {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .balance-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .balance-amount {
+            font-size: 42px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            margin-bottom: 20px;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid rgba(150,150,150,0.1);
+            padding-top: 20px;
+        }
+
+        .stat-item h4 {
+            margin: 0 0 5px 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .stat-item p {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .text-green { color: var(--accent-green); }
+        .text-red { color: var(--accent-red); }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
+        }
+
+        /* Transaction List */
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .transaction-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .transaction-item:last-child { border-bottom: none; }
+
+        .t-left {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .t-cat {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .t-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .t-right {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .t-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 18px;
+        }
+
+        /* Bottom Navigation */
+        nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-top: 1px solid var(--card-border);
+            padding: 10px 20px;
+            padding-bottom: calc(15px + var(--safe-area-bottom));
+            display: flex;
+            justify-content: space-around;
+            z-index: 100;
+        }
+
+        .nav-item {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 20px;
+            padding: 10px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .nav-item.active {
+            color: var(--accent-blue);
+        }
+
+        /* Fab Button */
+        .fab {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+            border: 4px solid var(--bg-color); /* Fake border matching bg */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.4);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .fab:active { transform: translateX(-50%) scale(0.9); }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+            display: flex;
+            align-items: flex-end; /* Sheet style on mobile */
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-color);
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            border-radius: 30px 30px 0 0;
+            padding: 30px 25px calc(30px + var(--safe-area-bottom));
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @media (min-width: 600px) {
+            .modal-overlay { align-items: center; }
+            .modal-content { border-radius: 30px; transform: scale(0.9); }
+            .modal-overlay.open .modal-content { transform: scale(1); }
+        }
+
+        .modal-overlay.open .modal-content {
+            transform: translateY(0);
+        }
+
+        /* Forms */
+        .form-group { margin-bottom: 20px; }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.5);
+            font-size: 16px;
+            color: var(--text-color);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent-blue);
+            background: rgba(255,255,255,0.8);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 16px;
+            border: none;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary { background: var(--accent-blue); color: white; }
+        .btn-secondary { background: rgba(0,0,0,0.05); color: var(--text-color); }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); }
+
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Settings / Tools Area */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: rgba(30, 41, 59, 0.9);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 14px;
+            z-index: 300;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            white-space: nowrap;
+        }
+        
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* Tabs logic */
+        .view-section { display: none; animation: fadeIn 0.4s; }
+        .view-section.active { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+    </style>
 </head>
 <body>
-    <!-- App Container -->
-    <div id="app" class="app-container">
 
-```
+<div class="app-container">
+    
     <!-- Header -->
-    <header class="app-header glass">
-        <h1>💰 Finance Tracker</h1>
-        <button class="settings-btn" id="settingsBtn" aria-label="Settings">⚙️</button>
+    <header>
+        <h1 id="page-title">Dashboard</h1>
+        <button class="header-btn" id="settings-btn" title="Settings">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
     </header>
 
-    <!-- Navigation -->
-    <nav class="tab-nav glass">
-        <button class="tab-btn active" data-tab="dashboard">
-            <span class="tab-icon">📊</span>
-            <span class="tab-label">Dashboard</span>
-        </button>
-        <button class="tab-btn" data-tab="transactions">
-            <span class="tab-icon">💳</span>
-            <span class="tab-label">Transactions</span>
-        </button>
-        <button class="tab-btn" data-tab="charts">
-            <span class="tab-icon">📈</span>
-            <span class="tab-label">Insights</span>
-        </button>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        
-        <!-- Dashboard Tab -->
-        <section id="dashboard" class="tab-content active">
+    <main>
+        <!-- DASHBOARD VIEW -->
+        <section id="view-dashboard" class="view-section active">
             
-            <!-- Balance Card -->
-            <div class="card glass balance-card">
-                <div class="card-header">
-                    <h2>Current Balance</h2>
-                </div>
-                <div class="balance-amount" id="currentBalance">$0.00</div>
-                <div class="balance-trend" id="balanceTrend"></div>
-            </div>
-
-            <!-- Quick Stats -->
-            <div class="stats-grid">
-                <div class="stat-card glass income-card">
-                    <div class="stat-icon">💵</div>
-                    <div class="stat-label">This Month Income</div>
-                    <div class="stat-value" id="monthIncome">$0.00</div>
-                </div>
-                <div class="stat-card glass expense-card">
-                    <div class="stat-icon">💸</div>
-                    <div class="stat-label">This Month Expenses</div>
-                    <div class="stat-value" id="monthExpenses">$0.00</div>
-                </div>
-                <div class="stat-card glass savings-card">
-                    <div class="stat-icon">🏦</div>
-                    <div class="stat-label">Total Savings</div>
-                    <div class="stat-value" id="totalSavings">$0.00</div>
-                </div>
-                <div class="stat-card glass bills-card">
-                    <div class="stat-icon">📋</div>
-                    <div class="stat-label">Monthly Bills</div>
-                    <div class="stat-value" id="monthlyBills">$0.00</div>
+            <div class="glass-card balance-card">
+                <div class="balance-label">Total Balance</div>
+                <div class="balance-amount" id="total-balance">$0.00</div>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <h4>Income</h4>
+                        <p class="text-green" id="month-income">$0.00</p>
+                    </div>
+                    <div class="stat-item">
+                        <h4>Expenses</h4>
+                        <p class="text-red" id="month-expense">$0.00</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- Recent Transactions -->
-            <div class="card glass recent-transactions">
-                <div class="card-header">
-                    <h3>Recent Activity</h3>
+            <div class="section-title">Spending Overview</div>
+            <div class="glass-card">
+                <div class="chart-container">
+                    <canvas id="spendingChart"></canvas>
                 </div>
-                <div id="recentTransactionsList" class="transactions-list"></div>
             </div>
 
-            <!-- Quick Add Button -->
-            <button class="fab" id="quickAddBtn" aria-label="Add Transaction">+</button>
-        </section>
-
-        <!-- Transactions Tab -->
-        <section id="transactions" class="tab-content">
-            
-            <!-- Add Transaction Form -->
-            <div class="card glass add-transaction-card">
-                <div class="card-header">
-                    <h3>Add Transaction</h3>
-                </div>
-                <form id="transactionForm" class="transaction-form">
-                    <div class="form-group">
-                        <label for="transactionType">Type</label>
-                        <select id="transactionType" required>
-                            <option value="income">💵 Income</option>
-                            <option value="expense">💸 Expense</option>
-                            <option value="bill">📋 Bill</option>
-                            <option value="subscription">🔄 Subscription</option>
-                            <option value="savings">🏦 Savings</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="transactionAmount">Amount</label>
-                        <input type="number" id="transactionAmount" step="0.01" min="0" placeholder="0.00" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="transactionDescription">Description</label>
-                        <input type="text" id="transactionDescription" placeholder="e.g., Salary, Rent, Netflix" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="transactionDate">Date</label>
-                        <input type="date" id="transactionDate" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="transactionNotes">Notes (Optional)</label>
-                        <textarea id="transactionNotes" rows="2" placeholder="Additional details..."></textarea>
-                    </div>
-
-                    <div class="form-group checkbox-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="transactionRecurring">
-                            <span class="checkbox-custom"></span>
-                            <span>Repeat monthly</span>
-                        </label>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary" id="submitTransactionBtn">Add Transaction</button>
-                        <button type="button" class="btn btn-secondary" id="cancelEditBtn" style="display: none;">Cancel</button>
-                    </div>
-                </form>
+            <div class="section-title">
+                Recent Transactions
+                <span style="font-size:14px; color:var(--accent-blue); font-weight:400; cursor:pointer;" onclick="app.navTo('view-transactions')">See All</span>
             </div>
-
-            <!-- All Transactions List -->
-            <div class="card glass transactions-history">
-                <div class="card-header">
-                    <h3>All Transactions</h3>
-                    <div class="filter-buttons">
-                        <button class="filter-btn active" data-filter="all">All</button>
-                        <button class="filter-btn" data-filter="income">Income</button>
-                        <button class="filter-btn" data-filter="expense">Expense</button>
-                    </div>
-                </div>
-                <div id="allTransactionsList" class="transactions-list"></div>
+            <div class="glass-card" style="padding: 0;">
+                <ul class="transaction-list" id="recent-tx-list">
+                    <!-- Populated by JS -->
+                </ul>
             </div>
         </section>
 
-        <!-- Charts Tab -->
-        <section id="charts" class="tab-content">
-            
-            <!-- Monthly Overview Chart -->
-            <div class="card glass chart-card">
-                <div class="card-header">
-                    <h3>Monthly Overview</h3>
+        <!-- TRANSACTIONS VIEW -->
+        <section id="view-transactions" class="view-section">
+            <div class="glass-card">
+                <div class="form-group">
+                    <input type="text" id="search-tx" placeholder="Search transactions..." onkeyup="app.renderTransactions()">
                 </div>
-                <div class="chart-container">
-                    <canvas id="monthlyChart"></canvas>
+                <div class="toggle-row">
+                    <select id="filter-cat" onchange="app.renderTransactions()">
+                        <option value="all">All Categories</option>
+                        <option value="Income">Income</option>
+                        <option value="Expense">Expense</option>
+                        <option value="Bills">Bills</option>
+                        <option value="Subscriptions">Subscriptions</option>
+                        <option value="Savings">Savings</option>
+                    </select>
                 </div>
             </div>
 
-            <!-- Category Breakdown Chart -->
-            <div class="card glass chart-card">
-                <div class="card-header">
-                    <h3>Spending by Category</h3>
-                </div>
-                <div class="chart-container">
+            <div class="section-title">History</div>
+            <div class="glass-card" style="padding: 0;">
+                <ul class="transaction-list" id="full-tx-list">
+                    <!-- Populated by JS -->
+                </ul>
+            </div>
+        </section>
+
+        <!-- ANALYTICS VIEW -->
+        <section id="view-analytics" class="view-section">
+             <div class="glass-card">
+                <div class="section-title">Category Breakdown</div>
+                <div class="chart-container" style="height: 250px;">
                     <canvas id="categoryChart"></canvas>
                 </div>
             </div>
-
-            <!-- Recurring Transactions -->
-            <div class="card glass recurring-card">
-                <div class="card-header">
-                    <h3>Recurring Transactions</h3>
+            
+            <div class="section-title">Monthly Trend</div>
+            <div class="glass-card">
+                 <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
                 </div>
-                <div id="recurringList" class="recurring-list"></div>
             </div>
         </section>
 
+        <!-- SETTINGS VIEW -->
+        <section id="view-settings" class="view-section">
+            <div class="glass-card">
+                <div class="section-title">Data Management</div>
+                <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">
+                    Your data is stored locally on this device. Back up regularly to avoid loss.
+                </p>
+                <div class="settings-grid">
+                    <button class="btn btn-secondary" onclick="app.exportData()">Export Backup</button>
+                    <label class="btn btn-secondary" style="text-align:center; display:block;">
+                        Import Backup
+                        <input type="file" id="import-file" style="display:none" onchange="app.importData(this)">
+                    </label>
+                </div>
+                <button class="btn btn-danger" onclick="app.resetData()" style="margin-top: 15px;">Reset All Data</button>
+            </div>
+
+            <div class="glass-card">
+                <div class="section-title">Recurring Reminders</div>
+                <div class="toggle-row">
+                    <span style="font-size:14px;">Show bill due warnings</span>
+                    <input type="checkbox" id="reminder-toggle" checked onchange="app.toggleReminders(this)">
+                </div>
+                <div id="reminder-banner" style="margin-top:10px; font-size:12px; color: var(--accent-purple);">
+                    <!-- Dynamic text -->
+                </div>
+            </div>
+        </section>
     </main>
 
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="modal">
-        <div class="modal-content glass">
-            <div class="modal-header">
-                <h2>Settings</h2>
-                <button class="modal-close" id="closeSettingsBtn">×</button>
-            </div>
-            <div class="modal-body">
-                
-                <div class="settings-section">
-                    <h3>Data Management</h3>
-                    <button class="btn btn-primary btn-block" id="exportDataBtn">📥 Export Data</button>
-                    <button class="btn btn-secondary btn-block" id="importDataBtn">📤 Import Data</button>
-                    <input type="file" id="importFileInput" accept=".json" style="display: none;">
-                </div>
+    <!-- Bottom Navigation -->
+    <nav>
+        <button class="nav-item active" onclick="app.navTo('view-dashboard')" id="nav-dash">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        </button>
+        <button class="nav-item" onclick="app.navTo('view-transactions')" id="nav-tx">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+        </button>
+        
+        <!-- FAB (Add Button) -->
+        <div class="fab" onclick="app.openModal()">+</div>
 
-                <div class="settings-section">
-                    <h3>Danger Zone</h3>
-                    <button class="btn btn-danger btn-block" id="resetDataBtn">🗑️ Reset All Data</button>
-                    <p class="settings-note">This will permanently delete all your transactions and data.</p>
-                </div>
-
-                <div class="settings-section">
-                    <h3>About</h3>
-                    <p class="settings-note">
-                        <strong>Finance Tracker v1.0</strong><br>
-                        All data is stored locally on your device.<br>
-                        No data is sent to any server.<br>
-                        Remember to export backups regularly.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Install Prompt Banner -->
-    <div id="installBanner" class="install-banner glass" style="display: none;">
-        <div class="install-content">
-            <span class="install-icon">📱</span>
-            <div class="install-text">
-                <strong>Install App</strong>
-                <p>Add to home screen for quick access</p>
-            </div>
-        </div>
-        <button class="install-btn" id="installBtn">Install</button>
-        <button class="install-close" id="closeInstallBtn">×</button>
-    </div>
+        <button class="nav-item" onclick="app.navTo('view-analytics')" id="nav-anal">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+        </button>
+        <button class="nav-item" onclick="app.navTo('view-settings')" id="nav-set">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+    </nav>
 
 </div>
 
-<!-- Scripts -->
-<script src="app.js"></script>
-```
+<!-- ADD/EDIT TRANSACTION MODAL -->
+<div class="modal-overlay" id="tx-modal">
+    <div class="modal-content">
+        <h2 style="margin-top:0;">Transaction</h2>
+        <form id="tx-form" onsubmit="app.saveTransaction(event)">
+            <input type="hidden" id="tx-id">
+            
+            <div class="form-group">
+                <label>Type</label>
+                <div style="display:flex; gap:10px;">
+                    <button type="button" class="btn btn-secondary" id="type-expense" onclick="app.setTxType('expense')">Expense</button>
+                    <button type="button" class="btn btn-secondary" id="type-income" onclick="app.setTxType('income')">Income</button>
+                </div>
+                <input type="hidden" id="tx-type" value="expense">
+            </div>
 
+            <div class="form-group">
+                <label>Amount</label>
+                <input type="number" step="0.01" id="tx-amount" required placeholder="0.00" inputmode="decimal">
+            </div>
+
+            <div class="form-group">
+                <label>Category</label>
+                <select id="tx-category">
+                    <option value="Bills">Bills</option>
+                    <option value="Subscriptions">Subscriptions</option>
+                    <option value="Food">Food</option>
+                    <option value="Transport">Transport</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Savings">Savings</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="tx-date" required>
+            </div>
+
+            <div class="form-group">
+                <label>Note</label>
+                <input type="text" id="tx-note" placeholder="e.g. Netflix, Rent">
+            </div>
+
+            <div class="form-group toggle-row">
+                <label style="margin:0;">Repeat Monthly</label>
+                <input type="checkbox" id="tx-recurring">
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancel</button>
+            <button type="button" class="btn btn-danger" id="btn-delete" style="display:none;" onclick="app.deleteTransaction()">Delete</button>
+        </form>
+    </div>
+</div>
+
+<div class="toast" id="toast">Action Successful</div>
+
+<script>
+/**
+ * LIQUID FINANCE APP
+ * Vanilla JS Implementation
+ */
+
+const Utils = {
+    formatCurrency: (num) => {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+    },
+    generateID: () => '_' + Math.random().toString(36).substr(2, 9),
+    getDateToday: () => new Date().toISOString().split('T')[0]
+};
+
+const DataManager = {
+    key: 'liquid_finance_data',
+    
+    getData: () => {
+        const data = localStorage.getItem(DataManager.key);
+        return data ? JSON.parse(data) : { transactions: [] };
+    },
+    
+    saveData: (data) => {
+        localStorage.setItem(DataManager.key, JSON.stringify(data));
+    },
+
+    // Logic to handle recurring transactions
+    checkRecurring: () => {
+        const data = DataManager.getData();
+        const today = new Date();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        let added = false;
+
+        data.transactions.forEach(tx => {
+            if (tx.recurring) {
+                const txDate = new Date(tx.date);
+                // If the transaction date is in a previous month/year
+                if (txDate.getMonth() < currentMonth || txDate.getFullYear() < currentYear) {
+                    // Create a new instance for this month
+                    const newTx = { ...tx, id: Utils.generateID(), date: Utils.getDateToday() };
+                    data.transactions.push(newTx);
+                    added = true;
+                }
+            }
+        });
+
+        if (added) {
+            DataManager.saveData(data);
+            return true;
+        }
+        return false;
+    }
+};
+
+const Charts = {
+    spendingInstance: null,
+    categoryInstance: null,
+    trendInstance: null,
+
+    renderSpending: (income, expense) => {
+        const ctx = document.getElementById('spendingChart').getContext('2d');
+        if (Charts.spendingInstance) Charts.spendingInstance.destroy();
+        
+        Charts.spendingInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Income', 'Expense'],
+                datasets: [{
+                    data: [income, expense],
+                    backgroundColor: ['#10b981', '#ef4444'],
+                    borderRadius: 8,
+                    barThickness: 40
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { display: false, grid: { display: false } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    },
+
+    renderCategory: (transactions) => {
+        // Group by category
+        const categories = {};
+        let total = 0;
+        transactions.forEach(tx => {
+            if (tx.type === 'expense' || tx.type === 'bills' || tx.type === 'subscriptions') {
+                categories[tx.category] = (categories[tx.category] || 0) + parseFloat(tx.amount);
+                total += parseFloat(tx.amount);
+            }
+        });
+
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        if (Charts.categoryInstance) Charts.categoryInstance.destroy();
+
+        Charts.categoryInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(categories),
+                datasets: [{
+                    data: Object.values(categories),
+                    backgroundColor: ['#ef4444', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#64748b'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+                }
+            }
+        });
+    }
+};
+
+const app = {
+    data: [],
+    currentType: 'expense',
+
+    init: () => {
+        // Check recurring on load
+        const newItems = DataManager.checkRecurring();
+        
+        app.data = DataManager.getData().transactions;
+        app.renderDashboard();
+        
+        // Initialize Charts
+        app.updateCharts();
+
+        // --- ADD THE SERVICE WORKER CODE HERE ---
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./service-worker.js')
+            .then(() => console.log('Service Worker Registered'))
+            .catch(err => console.log('SW Fail:', err));
+        }
+        // ------------------------------------------
+
+        // Listeners
+        document.getElementById('settings-btn').addEventListener('click', () => app.navTo('view-settings'));
+        
+        // Modal backdrop click
+        document.getElementById('tx-modal').addEventListener('click', (e) => {
+            if(e.target.id === 'tx-modal') app.closeModal();
+        });
+    },
+
+    navTo: (viewId) => {
+        // Hide all views
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+        // Show target
+        document.getElementById(viewId).classList.add('active');
+        
+        // Update Nav State
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        if(viewId === 'view-dashboard') {
+            document.getElementById('nav-dash').classList.add('active');
+            document.getElementById('page-title').innerText = "Dashboard";
+            app.renderDashboard(); // Refresh stats
+            app.updateCharts();
+        } else if (viewId === 'view-transactions') {
+            document.getElementById('nav-tx').classList.add('active');
+            document.getElementById('page-title').innerText = "Transactions";
+            app.renderTransactions();
+        } else if (viewId === 'view-analytics') {
+            document.getElementById('nav-anal').classList.add('active');
+            document.getElementById('page-title').innerText = "Analytics";
+            app.updateCharts(true); // Force update
+        } else if (viewId === 'view-settings') {
+            document.getElementById('nav-set').classList.add('active');
+            document.getElementById('page-title').innerText = "Settings";
+            app.checkReminders();
+        }
+    },
+
+    renderDashboard: () => {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        let income = 0;
+        let expense = 0;
+        let balance = 0;
+
+        // Sort by date desc
+        const sorted = [...app.data].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+        // Calculate stats
+        app.data.forEach(tx => {
+            const amt = parseFloat(tx.amount);
+            const d = new Date(tx.date);
+            
+            if (tx.type === 'income') {
+                balance += amt;
+                if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) income += amt;
+            } else {
+                balance -= amt;
+                if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) expense += amt;
+            }
+        });
+
+        // Update DOM
+        document.getElementById('total-balance').innerText = Utils.formatCurrency(balance);
+        document.getElementById('month-income').innerText = Utils.formatCurrency(income);
+        document.getElementById('month-expense').innerText = Utils.formatCurrency(expense);
+
+        // Recent Transactions (Top 5)
+        const list = document.getElementById('recent-tx-list');
+        list.innerHTML = '';
+        sorted.slice(0, 5).forEach(tx => list.appendChild(app.createTxElement(tx)));
+    },
+
+    renderTransactions: () => {
+        const search = document.getElementById('search-tx').value.toLowerCase();
+        const filter = document.getElementById('filter-cat').value;
+        
+        let filtered = app.data.filter(tx => {
+            const matchesSearch = tx.note.toLowerCase().includes(search) || tx.category.toLowerCase().includes(search);
+            const matchesFilter = filter === 'all' || 
+                                  (filter === 'Income' && tx.type === 'income') ||
+                                  (filter === 'Expense' && tx.type === 'expense') ||
+                                  tx.category === filter;
+            return matchesSearch && matchesFilter;
+        });
+
+        // Sort
+        filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+        const list = document.getElementById('full-tx-list');
+        list.innerHTML = '';
+        if(filtered.length === 0) {
+            list.innerHTML = '<li style="padding:20px; text-align:center; color:var(--text-secondary);">No transactions found</li>';
+        } else {
+            filtered.forEach(tx => list.appendChild(app.createTxElement(tx, true)));
+        }
+    },
+
+    createTxElement: (tx, clickable = false) => {
+        const li = document.createElement('li');
+        li.className = 'transaction-item';
+        if(clickable) li.style.cursor = 'pointer';
+        
+        const isExp = tx.type !== 'income';
+        const sign = isExp ? '-' : '+';
+        const colorClass = isExp ? 'text-red' : 'text-green';
+        const iconMap = {
+            'Bills': '🏠', 'Subscriptions': '📺', 'Food': '🍔', 
+            'Transport': '🚗', 'Shopping': '🛍️', 'Savings': '💰', 
+            'Entertainment': '🎮', 'Income': '💼', 'Other': '📝'
+        };
+        
+        li.innerHTML = `
+            <div style="display:flex; align-items:center;">
+                <div class="t-icon">${iconMap[tx.category] || '📝'}</div>
+                <div class="t-left">
+                    <span class="t-cat">${tx.note || tx.category}</span>
+                    <span class="t-meta">${new Date(tx.date).toLocaleDateString()} ${tx.recurring ? '• Recurring' : ''}</span>
+                </div>
+            </div>
+            <div class="t-right ${colorClass}">${sign}${Utils.formatCurrency(tx.amount)}</div>
+        `;
+
+        if(clickable) {
+            li.onclick = () => app.editTransaction(tx);
+        }
+
+        return li;
+    },
+
+    updateCharts: (force = false) => {
+        const now = new Date();
+        const m = now.getMonth();
+        const y = now.getFullYear();
+
+        let monthInc = 0;
+        let monthExp = 0;
+        let expenseList = [];
+
+        app.data.forEach(tx => {
+            const d = new Date(tx.date);
+            const amt = parseFloat(tx.amount);
+            // For current month bar chart
+            if (d.getMonth() === m && d.getFullYear() === y) {
+                if (tx.type === 'income') monthInc += amt;
+                else {
+                    monthExp += amt;
+                    expenseList.push(tx);
+                }
+            }
+        });
+
+        Charts.renderSpending(monthInc, monthExp);
+        Charts.renderCategory(expenseList);
+    },
+
+    // --- Modal & Forms ---
+
+    openModal: () => {
+        document.getElementById('tx-form').reset();
+        document.getElementById('tx-id').value = '';
+        document.getElementById('tx-date').value = Utils.getDateToday();
+        document.getElementById('btn-delete').style.display = 'none';
+        app.setTxType('expense');
+        document.getElementById('tx-modal').classList.add('open');
+    },
+
+    closeModal: () => {
+        document.getElementById('tx-modal').classList.remove('open');
+    },
+
+    setTxType: (type) => {
+        app.currentType = type;
+        document.getElementById('tx-type').value = type;
+        
+        // UI Toggle
+        const btnExp = document.getElementById('type-expense');
+        const btnInc = document.getElementById('type-income');
+        
+        if(type === 'expense') {
+            btnExp.style.background = 'var(--accent-red)';
+            btnExp.style.color = 'white';
+            btnInc.style.background = 'rgba(0,0,0,0.05)';
+            btnInc.style.color = 'var(--text-color)';
+        } else {
+            btnInc.style.background = 'var(--accent-green)';
+            btnInc.style.color = 'white';
+            btnExp.style.background = 'rgba(0,0,0,0.05)';
+            btnExp.style.color = 'var(--text-color)';
+        }
+    },
+
+    saveTransaction: (e) => {
+        e.preventDefault();
+        const id = document.getElementById('tx-id').value;
+        const amount = parseFloat(document.getElementById('tx-amount').value);
+        const category = document.getElementById('tx-category').value;
+        const date = document.getElementById('tx-date').value;
+        const note = document.getElementById('tx-note').value;
+        const recurring = document.getElementById('tx-recurring').checked;
+        const type = document.getElementById('tx-type').value;
+
+        if (id) {
+            // Edit
+            const index = app.data.findIndex(x => x.id === id);
+            if(index !== -1) {
+                app.data[index] = { id, amount, category, date, note, recurring, type };
+            }
+        } else {
+            // Add
+            const newTx = {
+                id: Utils.generateID(),
+                amount, category, date, note, recurring, type
+            };
+            app.data.push(newTx);
+        }
+
+        DataManager.saveData({ transactions: app.data });
+        app.closeModal();
+        app.renderDashboard();
+        app.renderTransactions();
+        app.showToast('Transaction Saved');
+    },
+
+    editTransaction: (tx) => {
+        app.openModal();
+        document.getElementById('tx-id').value = tx.id;
+        document.getElementById('tx-amount').value = tx.amount;
+        document.getElementById('tx-category').value = tx.category;
+        document.getElementById('tx-date').value = tx.date;
+        document.getElementById('tx-note').value = tx.note;
+        document.getElementById('tx-recurring').checked = tx.recurring;
+        app.setTxType(tx.type);
+        document.getElementById('btn-delete').style.display = 'block';
+    },
+
+    deleteTransaction: () => {
+        const id = document.getElementById('tx-id').value;
+        if(confirm('Delete this transaction?')) {
+            app.data = app.data.filter(x => x.id !== id);
+            DataManager.saveData({ transactions: app.data });
+            app.closeModal();
+            app.renderDashboard();
+            app.renderTransactions();
+            app.showToast('Transaction Deleted');
+        }
+    },
+
+    // --- Settings / Data ---
+
+    exportData: () => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(app.data));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "finance_backup_" + new Date().toISOString().slice(0,10) + ".json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    },
+
+    importData: (input) => {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const json = JSON.parse(e.target.result);
+                if (Array.isArray(json)) {
+                    app.data = json;
+                    DataManager.saveData({ transactions: app.data });
+                    app.renderDashboard();
+                    app.showToast('Data Imported Successfully');
+                } else {
+                    alert('Invalid file format');
+                }
+            } catch (err) {
+                alert('Error reading file');
+            }
+        };
+        reader.readAsText(file);
+    },
+
+    resetData: () => {
+        if(confirm('Are you sure you want to delete ALL data? This cannot be undone.')) {
+            app.data = [];
+            DataManager.saveData({ transactions: app.data });
+            app.renderDashboard();
+            app.showToast('All Data Reset');
+        }
+    },
+
+    checkReminders: () => {
+        const today = new Date();
+        const day = today.getDate();
+        let upcoming = [];
+        
+        // Find bills due within next 3 days
+        app.data.forEach(tx => {
+            if(tx.recurring && (tx.type === 'expense' || tx.category === 'Bills')) {
+                const txDate = new Date(tx.date);
+                if (txDate.getDate() >= day && txDate.getDate() <= day + 3) {
+                    upcoming.push(tx);
+                }
+            }
+        });
+
+        const banner = document.getElementById('reminder-banner');
+        if(upcoming.length > 0 && document.getElementById('reminder-toggle').checked) {
+            banner.innerHTML = `⚠️ You have ${upcoming.length} recurring bill(s) due soon.`;
+        } else {
+            banner.innerHTML = "No upcoming bills.";
+        }
+    },
+
+    toggleReminders: (el) => {
+        app.checkReminders();
+    },
+
+    showToast: (msg) => {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+};
+
+// Start App
+window.addEventListener('DOMContentLoaded', app.init);
+
+</script>
 </body>
 </html>
